@@ -9,10 +9,29 @@ import game_master
 import session_manager
 
 
+def build_client():
+    try:
+        from google import genai
+    except Exception as exc:
+        print(f"SDK google-genai não disponível; usando modo local: {exc}")
+        return None
+
+    api_key = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        print("Variável GOOGLE_API_KEY/GEMINI_API_KEY não definida; usando modo local.")
+        return None
+
+    try:
+        return genai.Client(api_key=api_key)
+    except Exception as exc:
+        print(f"Não foi possível iniciar o cliente Gemini: {exc}; usando modo local.")
+        return None
+
+
 def iniciar_jogo() -> None:
     print("--- Bem-vindo às Crônicas de Aethelgard ---")
     db = db_manager.DBManager()
-    gm = game_master.GameMaster(client=None)
+    gm = game_master.GameMaster(build_client())
     sm = session_manager.SessionManager(db, gm)
 
     personagem_id = None
@@ -20,7 +39,12 @@ def iniciar_jogo() -> None:
         nome = input("Digite o nome do personagem (ou deixe em branco para criar um padrão): ").strip()
         if not nome:
             nome = "Aelion"
-        personagem_id = db.create_character(nome=nome, atributos={"forca": 3, "agilidade": 3, "vontade": 3}, fadiga=0, xp=0)
+        personagem_id = db.create_character(
+            nome=nome,
+            atributos={"forca": 3, "agilidade": 3, "vontade": 3},
+            fadiga=0,
+            xp=0,
+        )
         break
 
     sm.iniciar_ou_retomar(personagem_id)

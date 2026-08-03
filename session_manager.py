@@ -15,17 +15,29 @@ class SessionManager:
         self.character_id: Optional[int] = None
         self.session_id: Optional[int] = None
 
-    def iniciar_ou_retomar(self, personagem_id: int) -> dict:
+    def iniciar_ou_retomar(self, personagem_id: int) -> Optional[str]:
         self.character_id = personagem_id
         last_session = self.db.get_last_session(personagem_id)
         if last_session:
             self.session_id = last_session["id"]
             self.current_interaction_id = last_session.get("interaction_id")
-            resumo = last_session.get("resumo_narrativo") or "Sessão retomada."
         else:
             self.session_id = self.db.create_session(personagem_id, resumo="Nova sessão iniciada.")
-            resumo = "Nova sessão iniciada."
-        return {"session_id": self.session_id, "resumo": resumo}
+        return self.current_interaction_id
+
+    def salvar_estado(self, resumo: str, interaction_id: Optional[str] = None) -> Optional[str]:
+        if self.character_id is None:
+            raise ValueError("Nenhum personagem foi inicializado para a sessão.")
+
+        if interaction_id is not None:
+            self.current_interaction_id = interaction_id
+
+        self.db.salvar_sessao(
+            self.character_id,
+            self.current_interaction_id,
+            resumo,
+        )
+        return self.current_interaction_id
 
     def registrar_turno(self, user_input: str, turno: dict) -> None:
         if not self.session_id:
