@@ -6,52 +6,72 @@ import io
 if sys.stdout.encoding != 'utf-8':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-from entities import Entity, Role
+from entities import Entity, Role, Rank
 from dice_logic import DiceLogic
 from narrator_engine import NarratorEngine
 
 def main():
     """
-    Esta função principal contém um exemplo de teste para verificar a integração
-    entre os módulos após a correção do dice_logic.py.
+    Função principal de teste para verificar a nova estrutura da entidade
+    e a lógica de evolução do personagem.
     """
-    print("--- Verificando a nova integração do `dice_logic.py` ---")
+    print("--- RPG Engine Test ---")
 
     # 1. Criação de Entidade e Narrador
-    player = Entity(name="Tester", role=Role.PLAYER)
+    player = Entity(
+        name="Zack", 
+        role=Role.PLAYER,
+        conceito="Mercenário Dimensional",
+        origem="Terra-7B",
+        ambicao="Encontrar o caminho de volta para casa"
+    )
     narrator = NarratorEngine()
 
-    # 2. Adicionar uma perícia para o teste
-    player.skills["combate"] = 2
-    player.fatigue = 1
-    print("\nFicha da Entidade para o teste:")
+    # 2. Adicionar XP e mostrar a ficha inicial
+    player.gain_xp(100)
+    print("\n--- Ficha Inicial ---")
+    print(narrator.show_sheet(player))
+    print(f"HP: {player.hp}, MP: {player.mp}")
+
+    # 3. Evoluir Atributo (Força de 1 para 2)
+    print("\n--- Tentando evoluir Força (Custo: 5 XP) ---")
+    if player.spend_xp("forca", is_attribute=True):
+        print("Força evoluída com sucesso!")
+    else:
+        print("Falha ao evoluir Força.")
+    print(f"XP restante: {player.xp}")
     print(narrator.show_sheet(player))
 
-    # 3. Realizar o teste de habilidade usando a nova DiceLogic
-    print("\n--- Realizando Teste de Força + Combate (Dificuldade 2) ---")
-    dificuldade_teste = 2
-    resultado = DiceLogic.teste_habilidade(
-        entity=player,
-        atributo="forca",
-        pericia="combate",
-        dificuldade=dificuldade_teste
-    )
-
-    # 4. Exibir o resultado formatado
-    print("\n--- Resultado da Rolagem ---")
-    print(DiceLogic.formatar_resultado(resultado))
-    
-    # 5. Interpretar o resultado
-    print("\n--- Interpretação ---")
-    if resultado["resultado_final"]:
-        print("O teste foi um SUCESSO!")
+    # 4. Comprar Perícia Nova (Combate Nível 1)
+    print("\n--- Tentando comprar Perícia 'Combate' (Custo: 10 XP) ---")
+    if player.spend_xp("combate", is_attribute=False):
+        print("Perícia 'Combate' comprada com sucesso!")
     else:
-        print("O teste foi uma FALHA.")
-    
-    if resultado["critico_bestial"]:
-        print("Houve um crítico bestial!")
-    if resultado["falha_bestial"]:
-        print("Houve uma falha bestial!")
+        print("Falha ao comprar perícia.")
+    print(f"XP restante: {player.xp}")
+    print(narrator.show_sheet(player))
+
+    # 5. Evoluir Perícia (Combate de 1 para 2)
+    print("\n--- Tentando evoluir Perícia 'Combate' (Custo: 3 XP) ---")
+    if player.spend_xp("combate", is_attribute=False):
+        print("Perícia 'Combate' evoluída com sucesso!")
+    else:
+        print("Falha ao evoluir perícia.")
+    print(f"XP restante: {player.xp}")
+    print(narrator.show_sheet(player))
+
+    # 6. Absorver Habilidade Única (Rank C)
+    print(f"\n--- Tentando absorver 'Cura Acelerada (Rank C)' (Custo: {Rank.C.value} XP) ---")
+    if player.absorver_habilidade_unica("Cura Acelerada", Rank.C):
+        print("Habilidade absorvida com sucesso!")
+    else:
+        print("Falha ao absorver habilidade.")
+    print(f"XP restante: {player.xp}")
+
+    # 7. Mostrar a ficha final
+    print("\n--- Ficha Final ---")
+    print(narrator.show_sheet(player))
+
 
 
 if __name__ == "__main__":
