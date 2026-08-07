@@ -1,115 +1,106 @@
-# main.py
-import sys
-import io
+# Bem-vindo ao motor de RPG MCP (Modular Core Progression)
+# Este arquivo serve como um guia para o Gemini Notebook interagir com o sistema.
 
-# Garante que o stdout lida com UTF-8 corretamente para exibir caracteres especiais
-if sys.stdout.encoding != 'utf-8':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-
-from entities import Entity, Role, Rank
-from dice_logic import DiceLogic
+# Para começar, importe as classes e funções necessárias:
+from entities import Personagem, carregar_personagem_de_arquivo
 from narrator_engine import NarratorEngine
-
-# main.py
-import sys
-import io
-
-# Garante que o stdout lida com UTF-8 corretamente para exibir caracteres especiais
-if sys.stdout.encoding != 'utf-8':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-
-from entities import Entity, Role, Rank
-from dice_logic import DiceLogic
-from narrator_engine import NarratorEngine
+from dice_logic import rolar_dados
 
 def main():
-    """
-    Função principal de teste para verificar a nova estrutura da entidade
-    e a lógica de evolução do personagem.
+    # =================================================================================
+    # COMO CARREGAR UM PERSONAGEM
+    # =================================================================================
+    # Use a função `carregar_personagem_de_arquivo` para criar uma instância de Personagem
+    # a partir de um arquivo de ficha, como o `ficha_teste.md`.
+
+    # personagem_principal = carregar_personagem_de_arquivo("ficha_teste.md")
+
+    # # Para visualizar a ficha carregada:
+    # print(personagem_principal)
+
+
+    # =================================================================================
+    # COMO CRIAR UM OPONENTE BÁSICO
+    # =================================================================================
+    # Você pode criar um oponente simples instanciando a classe Personagem e 
+    # ajustando seus atributos e perícias.
+
+    # oponente = Personagem()
+    # oponente.nome = "Goblin Batedor"
+    # oponente.atributos["FORÇA"] = 2
+    # oponente.atributos["AGILIDADE"] = 3
+    # oponente.atributos["VITALIDADE"] = 2
+    # oponente.pericias["Combate corpo-a-corpo"] = 2
+
+
+    # =================================================================================
+    # COMO USAR O NARRATOR ENGINE
+    # =================================================================================
+    # O NarratorEngine é o responsável por gerenciar as ações do personagem.
+    # Instancie o engine com o personagem que realizará as ações.
+
+    # motor_narrativo = NarratorEngine(personagem_principal)
+
+
+    # =================================================================================
+    # COMO REALIZAR UM TESTE DE PERÍCIA
+    # =================================================================================
+    # Use o método `realizar_teste` do motor_narrativo.
+    # Ele recebe o atributo, a perícia e a dificuldade como argumentos.
+    # Exemplo: Teste de Agilidade + Furtividade, dificuldade 3
+
+    # print("\\n--- Exemplo de Teste de Perícia ---")
+    # motor_narrativo.realizar_teste("AGILIDADE", "Furtividade", 3)
     
-    Para o Gemini Notebook, as interações do jogador (inputs) seriam capturadas
-    e usadas para chamar as funções e métodos da Engine de forma limpa.
-    """
-    # print("--- RPG Engine Test ---")
 
-    # 1. Criação de Entidade e Narrador
-    # No Gemini Notebook, os dados abaixo poderiam vir de inputs do jogador
-    # no início da sessão ou através de formulários/prompts interativos.
-    # Exemplo:
-    # player_name = input("Qual o nome do seu personagem? ")
-    # player_conceito = input("Qual o conceito do seu personagem? ")
-    # # Exemplo de criação de entidade com dados fixos para teste:
-    # player = Entity(
-    #     name="Zack", 
-    #     role=Role.PLAYER,
-    #     conceito="Mercenário Dimensional",
-    #     origem="Terra-7B",
-    #     ambicao="Encontrar o caminho de volta para casa"
+    # =================================================================================
+    # COMO REALIZAR UM COMBATE
+    # =================================================================================
+    # Use o método `combate` do motor_narrativo.
+    # Ele simula uma rodada de ataque vs. defesa.
+
+    # print("\\n--- Exemplo de Combate ---")
+    # motor_narrativo.combate(oponente, "FORÇA", "Combate corpo-a-corpo", "AGILIDADE", "Combate corpo-a-corpo")
+
+
+    # =================================================================================
+    # COMO ADICIONAR E SOLTAR UM PODER
+    # =================================================================================
+    # Primeiro, adicione um poder ao personagem usando o método `adicionar_poder`.
+    
+    # personagem_principal.adicionar_poder(
+    #     nome="Bola de Fogo",
+    #     rank="F",
+    #     efeito="Lança uma pequena bola de fogo que causa dano em área.",
+    #     exigencia="Custa 4 de MP"
     # )
-    # narrator = NarratorEngine()
+    # print("\\n--- Personagem com novo poder ---")
+    # print(personagem_principal)
 
-    # 2. Adicionar XP e mostrar a ficha inicial
-    # O ganho de XP (Essência) ocorreria com base nas ações narrativas do jogador.
-    # # Exemplo: player.gain_xp(narrator.resolve_narrative_event())
-    # player.gain_xp(100)
-    # print("\n--- Ficha Inicial ---")
-    # print(narrator.show_sheet(player))
-    # print(f"HP: {player.hp}, MP: {player.mp}")
+    # Para usar o poder, chame `soltar_poder`.
+    # O Mestre (você, no Notebook) decide qual Atributo e Perícia são mais
+    # apropriados para o teste, com base no efeito do poder e na situação.
+    # Por exemplo, uma "Bola de Fogo" pode exigir FOCO + OCULTISMO.
 
-    # 3. Evoluir Atributo (Força de 1 para 2)
-    # A evolução seria uma escolha explícita do jogador em um menu de progressão.
-    # Exemplo:
-    # choice = input("Deseja evoluir qual atributo? (forca, agilidade, ...) ")
-    # # if choice == "forca": player.spend_xp("forca", is_attribute=True)
-    # print("\n--- Tentando evoluir Força (Custo: 5 XP) ---")
-    # if player.spend_xp("forca", is_attribute=True):
-    #     print("Força evoluída com sucesso!")
-    # else:
-    #     print("Falha ao evoluir Força. XP insuficiente ou nível máximo atingido.")
-    # print(f"XP restante: {player.xp}")
-    # print(narrator.show_sheet(player))
+    # print("\\n--- Exemplo de Soltar um Poder ---")
+    # motor_narrativo.soltar_poder(
+    #     nome_poder="Bola de Fogo", 
+    #     atributo="FOCO", 
+    #     pericia="Ocultismo", 
+    #     dificuldade=2
+    # )
 
-    # 4. Comprar Perícia Nova (Combate Nível 1)
-    # O jogador escolheria comprar uma nova perícia.
-    # Exemplo:
-    # skill_to_buy = input("Qual perícia deseja comprar? ")
-    # player.spend_xp(skill_to_buy, is_attribute=False)
-    # print("\n--- Tentando comprar Perícia 'Combate' (Custo: 10 XP) ---")
-    # if player.spend_xp("combate", is_attribute=False):
-    #     print("Perícia 'Combate' comprada com sucesso!")
-    # else:
-    #     print("Falha ao comprar perícia. XP insuficiente.")
-    # print(f"XP restante: {player.xp}")
-    # print(narrator.show_sheet(player))
 
-    # 5. Evoluir Perícia (Combate de 1 para 2)
-    # # O jogador escolheria evoluir uma perícia existente.
-    # print("\n--- Tentando evoluir Perícia 'Combate' (Custo: 3 XP) ---")
-    # if player.spend_xp("combate", is_attribute=False):
-    #     print("Perícia 'Combate' evoluída com sucesso!")
-    # else:
-    #     print("Falha ao evoluir perícia. XP insuficiente ou nível máximo atingido.")
-    # print(f"XP restante: {player.xp}")
-    # print(narrator.show_sheet(player))
+    # =================================================================================
+    # COMO USAR A LÓGICA DE DADOS DIRETAMENTE
+    # =================================================================================
+    # Você também pode usar a função `rolar_dados` diretamente se precisar.
+    # Exemplo: rolar 5 dados com 1 nível de exaustão.
+    
+    # print("\\n--- Exemplo de Rolagem de Dados Direta ---")
+    # rolar_dados(5, 1)
 
-    # 6. Absorver Habilidade Única (Rank C)
-    # A absorção de habilidades únicas seria uma opção narrativa ou de progressão.
-    # Exemplo:
-    # power_choice = input("Deseja absorver 'Cura Acelerada' (Rank C)? (s/n) ")
-    # if power_choice.lower() == 's':
-    # #    player.absorver_habilidade_unica("Cura Acelerada", Rank.C)
-    # print(f"\n--- Tentando absorver 'Cura Acelerada (Rank C)' (Custo: {Rank.C.value} XP) ---")
-    # if player.absorver_habilidade_unica("Cura Acelerada", Rank.C):
-    #     print("Habilidade absorvida com sucesso!")
-    # else:
-    #     print("Falha ao absorver habilidade. XP insuficiente.")
-    # print(f"XP restante: {player.xp}")
-
-    # 7. Mostrar a ficha final
-    # # A ficha é mostrada em pontos chave de decisão ou ao final de um turno.
-    # print("\n--- Ficha Final ---")
-    # print(narrator.show_sheet(player))
-
+    pass # Deixe o "pass" aqui para manter o arquivo executável.
 
 if __name__ == "__main__":
     main()

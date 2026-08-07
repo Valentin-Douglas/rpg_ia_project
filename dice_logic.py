@@ -1,57 +1,68 @@
-# dice_logic.py
-from entities import Entity
-from rpg_dice import rolar_pool, formatar_resultado_pool
+import random
 
-class DiceLogic:
+def rolar_dados(pool_size, exhaustion_level=0):
     """
-    Esta classe serve como uma interface entre a lógica de jogo (entidades, atributos)
-    e o motor de rolagem de dados (rpg_dice.py). No Gemini Notebook, esta classe
-    seria chamada pelo narrador sempre que uma ação do jogador exigir um teste.
+    Rola uma quantidade de dados de 10 faces, aplicando as regras de exaustão e acerto crítico.
+
+    Args:
+        pool_size (int): A quantidade total de dados a serem rolados (Atributo + Perícia).
+        exhaustion_level (int): O nível de exaustão, que substitui dados normais por dados de exaustão.
+
+    Returns:
+        dict: Um dicionário contendo os resultados da rolagem.
+              {
+                  'sucessos': int,          # Número total de sucessos (>= 6)
+                  'is_critico': bool,       # Se a rolagem foi um acerto crítico (2 ou mais 10s)
+                  'complicacoes': int,      # Número de '1's em dados de exaustão
+                  'consequencias': int,     # Número de '10's em dados de exaustão
+                  'rolls_normais': list,    # Lista dos resultados dos dados normais
+                  'rolls_exaustao': list    # Lista dos resultados dos dados de exaustão
+              }
     """
-    @staticmethod
-    def teste_habilidade(entity: Entity, atributo: str, pericia: str, dificuldade: int) -> dict:
-        """
-        Realiza um teste de habilidade para uma entidade.
+    if exhaustion_level > pool_size:
+        exhaustion_level = pool_size # Não pode ter mais dados de exaustão do que o pool total
 
-        No Gemini Notebook, esta função seria o núcleo para resolver ações incertas.
-        Por exemplo, se um jogador digitar "Tento escalar o muro", o narrador
-        identificaria a ação, definiria o atributo ('forca'), a perícia ('mobilidade')
-        e a dificuldade, e então chamaria esta função.
+    num_dados_normais = pool_size - exhaustion_level
+    num_dados_exaustao = exhaustion_level
 
-        Exemplo de chamada baseada no input:
-        # input_jogador = "Tento arrombar a porta"
-        # if "arrombar" in input_jogador:
-        #     resultado = DiceLogic.teste_habilidade(player, "forca", "combate", dificuldade=2)
+    rolls_normais = [random.randint(1, 10) for _ in range(num_dados_normais)]
+    rolls_exaustao = [random.randint(1, 10) for _ in range(num_dados_exaustao)]
 
-        Parâmetros:
-        - entity: A entidade que realiza o teste.
-        - atributo: O nome do atributo a ser usado (ex: "forca").
-        - pericia: O nome da perícia a ser usada (ex: "combate").
-        - dificuldade: O número de sucessos necessários.
+    todos_os_rolls = rolls_normais + rolls_exaustao
 
-        Retorna:
-        - Um dicionário com o resultado completo da rolagem.
-        """
-        attribute_level = entity.attributes.get(atributo, 0)
-        skill_level = entity.skills.get(pericia, 0)
-        
-        pool_total = attribute_level + skill_level
-        nivel_fadiga = entity.fatigue
+    # Calcula sucessos (qualquer dado >= 6)
+    sucessos = sum(1 for r in todos_os_rolls if r >= 6)
 
-        # A chamada para rolar_pool é interna e não precisa de interação direta do jogador.
-        resultado_rolagem = rolar_pool(
-            pool=pool_total,
-            fadiga=nivel_fadiga,
-            dificuldade=dificuldade
-        )
-        
-        return resultado_rolagem
+    # Verifica acerto crítico (pelo menos dois 10s no total)
+    num_tens = todos_os_rolls.count(10)
+    is_critico = num_tens >= 2
+    if is_critico:
+        sucessos += 2  # Adiciona 2 sucessos bônus pelo crítico
 
-    @staticmethod
-    def formatar_resultado(resultado: dict) -> str:
-        """
-        Formata o dicionário de resultado da rolagem em uma string legível.
-        Esta função é usada para apresentar o resultado do teste ao jogador
-        de forma clara no Gemini Notebook.
-        """
-        return formatar_resultado_pool(resultado)
+    # Verifica complicações (resultado 1 nos dados de exaustão)
+    complicacoes = rolls_exaustao.count(1)
+
+    # Verifica consequências (resultado 10 nos dados de exaustão)
+    consequencias = rolls_exaustao.count(10)
+    
+    resultado = {
+        'sucessos': sucessos,
+        'is_critico': is_critico,
+        'complicacoes': complicacoes,
+        'consequencias': consequencias,
+        'rolls_normais': rolls_normais,
+        'rolls_exaustao': rolls_exaustao
+    }
+
+    print(f"Rolagem: Pool={pool_size}, Exaustão={exhaustion_level}")
+    print(f"  - Dados Normais: {rolls_normais}")
+    print(f"  - Dados Exaustão: {rolls_exaustao}")
+    print(f"  - Resultado Final: {resultado['sucessos']} sucessos.")
+    if resultado['is_critico']:
+        print("  - ACERTO CRÍTICO!")
+    if resultado['complicacoes'] > 0:
+        print(f"  - Complicações: {resultado['complicacoes']}")
+    if resultado['consequencias'] > 0:
+        print(f"  - Consequências: {resultado['consequencias']}")
+
+    return resultado

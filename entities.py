@@ -1,146 +1,209 @@
-# entities.py
-from enum import Enum
+import re
 
-class Role(Enum):
-    PLAYER = "Jogador"
-    ALLY = "Aliado"
-    ENEMY = "Inimigo"
-
-class Rank(Enum):
-    F = 5
-    E = 15
-    D = 25
-    C = 50
-    B = 75
-    A = 150
-    S = 300
-    SS = 500
-    SSS = 2000
-
-class Entity:
-    """
-    Representa uma entidade no jogo (Jogador, Aliado, Inimigo).
-    No Gemini Notebook, uma instância desta classe armazena o estado completo do personagem do jogador.
-    """
-    def __init__(self, name: str, role: Role, conceito: str = None, origem: str = None, ambicao: str = None, ancora_moral: str = None, gatilho_colapso: str = None):
-        """
-        No Gemini Notebook, os parâmetros para criar a entidade seriam coletados
-        através de inputs do jogador no início do jogo.
-        Exemplo:
-        # nome_jogador = input("Digite o nome do seu personagem: ")
-        # player = Entity(name=nome_jogador, role=Role.PLAYER, ...)
-        """
-        self.name = name
-        self.role = role
-        
+class Personagem:
+    def __init__(self):
         # I. IDENTIDADE E ANTECEDENTES
-        self.conceito = conceito
-        self.origem = origem
-        self.ambicao = ambicao
-        self.ancora_moral = ancora_moral
-        self.gatilho_colapso = gatilho_colapso
+        self.nome = ""
+        self.conceito = ""
+        self.origem = ""
+        self.ambicao = ""
+        self.ancora_moral = ""
+        self.gatilho_colapso = ""
 
-        # II. ATRIBUTOS NUCLEARES (1-5)
-        # A distribuição inicial de atributos também seria uma escolha do jogador.
-        self.attributes = {
-            "forca": 1,
-            "agilidade": 1,
-            "vitalidade": 1,
-            "eloquencia": 1,
-            "inteligencia": 1,
-            "foco": 1,
+        # II. ATRIBUTOS NUCLEARES
+        self.atributos = {
+            "FORÇA": 1,
+            "AGILIDADE": 1,
+            "VITALIDADE": 1,
+            "ELOQUÊNCIA": 1,
+            "INTELIGÊNCIA": 1,
+            "FOCO": 1
         }
 
-        # III. PERÍCIAS (0-5)
-        self.skills = {}
+        # III. PERÍCIAS
+        self.pericias = {
+            "Mobilidade": 0,
+            "Combate corpo-a-corpo": 0,
+            "Furtividade": 0,
+            "Armas de Precisão": 0,
+            "Sobrevivência": 0,
+            "Empatia": 0,
+            "Intimidação": 0,
+            "Lábia": 0,
+            "Liderança": 0,
+            "Barganha": 0,
+            "Erudição": 0,
+            "Investigação": 0,
+            "Medicina": 0,
+            "Ocultismo": 0,
+            "Tecnologia/Ofícios": 0
+        }
 
-        # V. PODERES (Habilidades Únicas)
-        self.unique_abilities = []
-
-        # VI. EVOLUÇÃO (Essência)
-        self.xp = 0
-        
         # IV. MOTOR DE RISCO E CONDIÇÃO
-        self.fatigue = 0
-        self.is_alive = True
-
-    @property
-    def hp(self) -> int:
-        """HP é calculado por Vitalidade + Foco."""
-        return self.attributes.get("vitalidade", 0) + self.attributes.get("foco", 0)
-
-    @property
-    def mp(self) -> int:
-        """MP é calculado por Foco + Inteligência."""
-        return self.attributes.get("foco", 0) + self.attributes.get("inteligencia", 0)
-
-    def get_power_level(self) -> int:
-        """Calcula a força total da entidade somando atributos e perícias."""
-        return sum(self.attributes.values()) + sum(self.skills.values())
-
-    def gain_xp(self, amount: int):
-        """
-        Adiciona Essência (XP) à entidade. Esta função seria chamada pelo narrador
-        após o jogador completar ações notáveis ou marcos na história.
-        """
-        if amount > 0:
-            self.xp += amount
-
-    def absorver_habilidade_unica(self, habilidade_nome: str, rank: Rank) -> bool:
-        """
-        Gasta XP para absorver uma Habilidade Única. No Gemini Notebook,
-        o jogador faria essa escolha a partir de uma lista de opções apresentada
-        pelo narrador.
-        Exemplo:
-        # opcao = input("Deseja absorver 'Sentidos Aguçados' (Rank D)? ")
-        # if opcao.lower() == 'sim':
-        #     player.absorver_habilidade_unica("Sentidos Aguçados", Rank.D)
-        """
-        cost = rank.value
-        if self.xp >= cost:
-            self.xp -= cost
-            self.unique_abilities.append(f"{habilidade_nome} (Rank {rank.name})")
-            return True
-        return False
-
-    def spend_xp(self, characteristic_name: str, is_attribute: bool) -> bool:
-        """
-        Gasta XP para aumentar um Atributo ou Perícia. No Gemini Notebook,
-        o jogador escolheria o que evoluir em um menu de personagem.
-        Exemplo:
-        # escolha = input("O que você quer evoluir? (atributo/pericia) ")
-        # if escolha == "atributo":
-        #     attr_nome = input("Qual atributo? ")
-        #     player.spend_xp(attr_nome, is_attribute=True)
-        """
-        if is_attribute:
-            if characteristic_name not in self.attributes:
-                return False
-            
-            current_level = self.attributes[characteristic_name]
-            if current_level >= 5: return False # Limite de 5 para atributos
-            
-            cost = current_level * 5
-            
-            if self.xp >= cost:
-                self.xp -= cost
-                self.attributes[characteristic_name] += 1
-                return True
-        else: # É uma perícia
-            current_level = self.skills.get(characteristic_name, 0)
-            if current_level >= 5: return False # Limite de 5 para perícias
-
-            if current_level == 0: # Comprar nova perícia
-                cost = 10
-                if self.xp >= cost:
-                    self.xp -= cost
-                    self.skills[characteristic_name] = 1
-                    return True
-            else: # Evoluir perícia existente
-                cost = current_level * 3
-                if self.xp >= cost:
-                    self.xp -= cost
-                    self.skills[characteristic_name] += 1
-                    return True
+        self.exaustao = 0
+        self._mp = None # Para permitir a dedução de MP
         
-        return False
+        # V. PODERES
+        self.poderes = []
+
+        # VI. EVOLUÇÃO
+        self.xp = 0
+        self.total_absorvido = 0
+
+    @property
+    def hp(self):
+        return self.atributos["VITALIDADE"] + self.atributos["FOCO"]
+
+    @property
+    def mp(self):
+        if self._mp is None:
+            return self.atributos["FOCO"] + self.atributos["INTELIGÊNCIA"]
+        return self._mp
+    
+    @mp.setter
+    def mp(self, value):
+        self._mp = value
+
+    def adicionar_poder(self, nome, rank, efeito, exigencia):
+        """Adiciona um poder à lista de poderes do personagem."""
+        self.poderes.append({
+            "Nome": nome,
+            "Rank": rank,
+            "Efeito": efeito,
+            "Exigencia": exigencia
+        })
+
+    def evoluir_atributo(self, atributo, custo):
+        if self.xp >= custo:
+            if self.atributos[atributo] < 5:
+                self.atributos[atributo] += 1
+                self.xp -= custo
+                print(f"Atributo {atributo} evoluído para {self.atributos[atributo]}!")
+                return True
+            else:
+                print(f"Atributo {atributo} já está no nível máximo.")
+                return False
+        else:
+            print("XP insuficiente.")
+            return False
+
+    def evoluir_pericia(self, pericia, custo):
+        if self.xp >= custo:
+            if self.pericias[pericia] < 5:
+                self.pericias[pericia] += 1
+                self.xp -= custo
+                print(f"Perícia {pericia} evoluída para {self.pericias[pericia]}!")
+                return True
+            else:
+                print(f"Perícia {pericia} já está no nível máximo.")
+                return False
+        else:
+            print("XP insuficiente.")
+            return False
+            
+    def __str__(self):
+        poderes_str = "Nenhum poder adquirido."
+        if self.poderes:
+            poderes_str = ""
+            for poder in self.poderes:
+                poderes_str += f"- {poder['Nome']} (Rank: {poder['Rank']})\\n"
+                poderes_str += f"  Efeito: {poder['Efeito']}\\n"
+                poderes_str += f"  Exigencia: {poder['Exigencia']}\\n"
+
+        pericias_str = "\\n".join([f"  {p}: {lvl}" for p, lvl in self.pericias.items()])
+
+        return f"""
+📜 FICHA DE PERSONAGEM 
+👤 I. IDENTIDADE E ANTECEDENTES
+Nome: {self.nome}
+Conceito/Arquétipo: {self.conceito}
+Origem/Mundo Natal: {self.origem}
+Ambição: {self.ambicao}
+Âncora Moral: {self.ancora_moral}
+Gatilho de Colapso: {self.gatilho_colapso}
+
+🧬 II. ATRIBUTOS NUCLEARES
+FORÇA: {self.atributos['FORÇA']}
+AGILIDADE: {self.atributos['AGILIDADE']}
+VITALIDADE: {self.atributos['VITALIDADE']}
+ELOQUÊNCIA: {self.atributos['ELOQUÊNCIA']}
+INTELIGÊNCIA: {self.atributos['INTELIGÊNCIA']}
+FOCO: {self.atributos['FOCO']}
+
+🎭 III. PERÍCIAS
+{pericias_str}
+
+⚠️ IV. MOTOR DE RISCO E CONDIÇÃO
+HP: {self.hp}
+MP: {self.mp}
+EXAUSTÃO: {self.exaustao}
+
+🔮 V. PODERES
+{poderes_str}
+
+💠 VI. EVOLUÇÃO
+XP: {self.xp}
+"""
+
+
+def carregar_personagem_de_arquivo(caminho_arquivo):
+    personagem = Personagem()
+    with open(caminho_arquivo, 'r', encoding='utf-8') as f:
+        content = f.read()
+
+    # I. IDENTIDADE
+    personagem.nome = re.search(r"Nome: (.*)", content).group(1).strip()
+    personagem.conceito = re.search(r"Conceito/Arquétipo: (.*)", content).group(1).strip()
+    personagem.origem = re.search(r"Origem/Mundo Natal: (.*)", content).group(1).strip()
+    personagem.ambicao = re.search(r"Ambição: (.*)", content).group(1).strip()
+    personagem.ancora_moral = re.search(r"Âncora Moral: (.*)", content).group(1).strip()
+    personagem.gatilho_colapso = re.search(r"Gatilho de Colapso: (.*)", content).group(1).strip()
+
+    # II. ATRIBUTOS
+    atributos_matches = re.findall(r"\[(\d)\] (.*?):", content)
+    for valor, nome in atributos_matches:
+        nome_limpo = nome.strip().upper()
+        if nome_limpo in personagem.atributos:
+            personagem.atributos[nome_limpo] = int(valor)
+    
+    # III. PERÍCIAS
+    pericias_matches = re.findall(r"\[(\d)\] (.*?)\s\(", content)
+    for valor, nome in pericias_matches:
+        nome_limpo = nome.strip()
+        if nome_limpo in personagem.pericias:
+            personagem.pericias[nome_limpo] = int(valor)
+
+    # IV. MOTOR DE RISCO E CONDIÇÃO
+    hp_match = re.search(r"HP: \[(\d)\]", content)
+    if hp_match:
+        # HP é calculado, mas podemos querer armazenar o atual no futuro
+        pass
+    mp_match = re.search(r"MP: \[(\d)\]", content)
+    if mp_match:
+        personagem.mp = int(mp_match.group(1))
+
+    exaustao_match = re.search(r"EXAUSTÃO: \[(\d)\]", content)
+    if exaustao_match:
+        personagem.exaustao = int(exaustao_match.group(1))
+
+    # V. PODERES
+    poderes_section = re.search(r"🔮 V\. PODERES \((.*?)\)(.*?)💠 VI\.", content, re.DOTALL)
+    if poderes_section:
+        poderes_content = poderes_section.group(2)
+        # Regex para encontrar múltiplos poderes
+        poderes_matches = re.finditer(r"\[(.*?)\] — Rank: \[(.*?)\]\s*Efeito Narrativo e Mecânico: (.*?)\s*Exigencia: (.*?)(?=\n\[|$)", poderes_content, re.DOTALL)
+        for match in poderes_matches:
+            nome = match.group(1).strip()
+            rank = match.group(2).strip()
+            efeito = match.group(3).strip()
+            exigencia = match.group(4).strip()
+            if nome: # Garante que não adicionemos uma entrada vazia
+                personagem.adicionar_poder(nome, rank, efeito, exigencia)
+
+
+    # VI. EVOLUÇÃO
+    xp_match = re.search(r"XP: (\d+) XP", content)
+    if xp_match:
+        personagem.xp = int(xp_match.group(1))
+
+    return personagem
